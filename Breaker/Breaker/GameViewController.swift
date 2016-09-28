@@ -7,49 +7,72 @@
 //
 
 import UIKit
-import SpriteKit
+import SceneKit
 import GameplayKit
 
 class GameViewController: UIViewController {
-
+    
+    var scnView:SCNView!
+    var scnScene: SCNScene!
+    weak var game: GameHelper! = GameHelper.sharedInstance
+    weak var horCamera: SCNNode!
+    weak var verCamera: SCNNode!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let view = self.view as! SKView? {
-            // Load the SKScene from 'GameScene.sks'
-            if let scene = SKScene(fileNamed: "GameScene") {
-                // Set the scale mode to scale to fit the window
-                scene.scaleMode = .aspectFill
-                
-                // Present the scene
-                view.presentScene(scene)
-            }
-            
-            view.ignoresSiblingOrder = true
-            
-            view.showsFPS = true
-            view.showsNodeCount = true
-        }
+        // 1 
+        setupScene()
+        setupNodes()
+        setupSounds()
+        
     }
-
+    
+    // 2 
+    func setupScene() {
+        scnView = self.view as! SCNView
+        scnView.delegate = self
+        
+        scnScene = SCNScene(named: "Breaker.scnassets/Scenes/Game.scn")
+        scnView.scene = scnScene
+        scnScene.rootNode.addChildNode(game.hudNode)
+        
+    }
+    
+    func setupNodes() {
+        horCamera = scnScene.rootNode.childNode(withName: "HorCamera", recursively: true)
+        verCamera = scnScene.rootNode.childNode(withName: "VerCamera", recursively: true)
+    }
+    
+    func setupSounds() {
+    
+    }
+    
     override func shouldAutorotate() -> Bool {
+        
         return true
     }
-
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-        if UIDevice.current().userInterfaceIdiom == .phone {
-            return .allButUpsideDown
-        } else {
-            return .all
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        let orientation = UIDevice.current().orientation
+        switch orientation {
+        case .portrait:
+            scnView.pointOfView = verCamera
+        default:
+            scnView.pointOfView = horCamera
         }
     }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Release any cached data, images, etc that aren't in use.
-    }
-
+    
     override func prefersStatusBarHidden() -> Bool {
         return true
+        
+    }
+    
+}
+
+// 3
+extension GameViewController: SCNSceneRendererDelegate {
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        game.updateHUD()
     }
 }
